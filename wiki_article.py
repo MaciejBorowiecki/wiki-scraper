@@ -1,4 +1,6 @@
 from bs4 import BeautifulSoup
+from io import StringIO
+import pandas as pd
 
 class WikiArticle:
     """
@@ -17,7 +19,11 @@ class WikiArticle:
         if not self.content_div:
             print(f"Warning: Main content container was not found for '{title}'.")
     
-    def get_summary(self) -> str:
+    def get_summary(self):
+        """
+        Extracts summary (the first paragraph) of the article.
+        """
+        
         if not self.content_div:
             print(f"Warning: Main content container was not found for '{self.title}'.")
             return None
@@ -28,4 +34,44 @@ class WikiArticle:
             print(f"First paragraph was not found for '{self.title}'.")
             return None
         return first_paragraph.get_text().strip()
+
+    def get_table(self, index: int, use_first_row_as_header: bool = False):
+        """
+        Extracts the nth table (index is 1-based) from the article content.
+        """
+        
+        if not self.content_div:
+            print(f"Warning: Main content container was not found for '{self.title}'.")
+            return None
+        
+        tables = self.content_div.find_all('table', limit=index)
+        
+        if not tables:
+            print(f"Error: There are no tables on the '{self.title}' page.")
+            return None
+        
+        if index < 1 or index > len(tables):
+            print(f"Error: Table index out of bounds. For '{self.title}' ",
+                  f"page index should be between 1 and {len(tables)}.")
+            return None
+        
+        selected_table = tables[-1] 
+        selected_table_pd = StringIO(str(selected_table))
+        
+        header_row = 0 if use_first_row_as_header else None
+        try:
+            df_selected_table = pd.read_html(
+                selected_table_pd,
+                header=header_row,
+                index_col=0
+            )
+            
+            if df_selected_table[0].empty:
+                print("Error: there is no data in selected table.")
+                return None
+            return df_selected_table[0]
+        except ValueError:
+            print("Error: {e}.")
+            return None
+            
     

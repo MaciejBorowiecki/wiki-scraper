@@ -15,10 +15,10 @@ class WikiScraper:
         self.use_local_file = use_local_html_file_instead
         self.history = {}
 
-    def _handle_local_file(self, phrase) -> str:
+    def _handle_local_file(self, phrase):
         pass  # TODO
 
-    def _handle_online_request(self, phrase) -> str:
+    def _handle_online_request(self, phrase):
         url = f"{self.base_url}/{phrase.replace(' ', '_')}"
 
         try:
