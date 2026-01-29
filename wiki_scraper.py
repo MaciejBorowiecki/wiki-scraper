@@ -1,32 +1,36 @@
 import argparse
 from wiki_manager import WikiManager
 
+
 def validate_arguments(parser: argparse.ArgumentParser, args):
     """
     Validates the correctness of the given arguments, sets error in the parser
     in case of incorrect arguments. 
     """
-    
+
     # Check whether any of the main modes arguments were given.
     modes = [
         args.summary,
-        args.table
+        args.table,
+        args.count_words
     ]
     if not any(modes):
         parser.error("None of the main modes selected.")
-    
+
     if args.table and args.number == None:
         parser.error("Argument '--number' is required with '--table'.")
-    
+
     if args.table == None and args.number:
         parser.error("Argument '--table' is required with '--number'.")
-        
+
     if args.first_row_is_header and (args.table == None or args.number == None):
-        parser.error("Arguments '--table' and '--number' are required for '--first-row-is-header'.")
-    
+        parser.error(
+            "Arguments '--table' and '--number' are required for '--first-row-is-header'.")
+
     if args.number and args.number <= 0:
         parser.error("Argument '--number' needs to be greater or equal to 1")
-    
+
+
 def parse_arguments():
     parser = argparse.ArgumentParser()
 
@@ -57,7 +61,16 @@ def parse_arguments():
     table_group.add_argument(
         '--first-row-is-header',
         action='store_true',
-        help='Use the first row of the table as the header.'  
+        help='Use the first row of the table as the header.'
+    )
+
+    # word occurences and statistics arguments
+    statistics_group = parser.add_argument_group('Article Content Statistics')
+    statistics_group.add_argument(
+        '--count-words',
+        type=str,
+        metavar='PHRASE',
+        help='Count the occurrences of words from the article found for PHRASE. Save results to JSON.'
     )
 
     args = parser.parse_args()
