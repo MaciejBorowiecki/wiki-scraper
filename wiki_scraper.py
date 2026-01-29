@@ -8,20 +8,27 @@ def validate_arguments(parser: argparse.ArgumentParser, args):
     in case of incorrect arguments. 
     """
 
+    def _check_mutually_dependent(*args) -> bool:
+        """
+        Returns True when either all or none arguments are provided, False otherwise.
+        """
+        count_present = sum(1 for arg in args if arg is not None)
+        return count_present == 0 or count_present == len(args)
+    
     # Check whether any of the main modes arguments were given.
     modes = [
         args.summary,
         args.table,
-        args.count_words
+        args.count_words,
+        args.analyze_relative_word_frequency
     ]
+
     if not any(modes):
         parser.error("None of the main modes selected.")
 
-    if args.table and args.number == None:
-        parser.error("Argument '--number' is required with '--table'.")
-
-    if args.table == None and args.number:
-        parser.error("Argument '--table' is required with '--number'.")
+    if not _check_mutually_dependent(args.table, args.number):
+        parser.error(
+            "Arguments '--table' and '--number' must be used together.")
 
     if args.first_row_is_header and (args.table == None or args.number == None):
         parser.error(
@@ -30,6 +37,19 @@ def validate_arguments(parser: argparse.ArgumentParser, args):
     if args.number and args.number <= 0:
         parser.error("Argument '--number' needs to be greater or equal to 1")
 
+    if not _check_mutually_dependent(args.analyze_relative_word_frequency, args.mode, args.count):
+        parser.error(
+            "Arguments '--analyze-relative-word-frequency', '--count' and '--mode' must be used together.")
+        
+    if args.mode and args.mode != 'article' and args.mode != 'language':
+        parser.error("The only valid modes are 'article' and 'language'.")
+
+    if args.analyze_relative_word_frequency == None and args.chart:
+        parser.error(
+            "Arguments '--analyze-relative-word-frequency', '--count' and '--mode' must be used " + 
+            "in order to use '--chart'."
+        )
+    
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
@@ -71,6 +91,38 @@ def parse_arguments():
         type=str,
         metavar='PHRASE',
         help='Count the occurrences of words from the article found for PHRASE. Save results to JSON.'
+    )
+    statistics_group.add_argument(
+        '--analyze-relative-word-frequency',
+        action='store_true',
+        help=(
+            'Analyze the frequency of wiki words (collected at `count-words`) ' +
+            'in relation to the frequency of these words in the wiki language.'
+        )
+    )
+    statistics_group.add_argument(
+        '--mode',
+        type=str,
+        metavar='MODE',
+        help=(
+            'Sort by frequency of words in ARTICLE or sort by LANGUAGE of the wiki. ' +
+            'Required if --analyze-relative-word-frequency is used.'
+        )
+    )
+    statistics_group.add_argument(
+        '--count',
+        type=int,
+        metavar='ROWS',
+        help=(
+            'Number of words to compare their frequency between the wiki articles and the wiki language ' +
+            'Required if --analyze-relative-word-frequency is used.'
+        )
+    )
+    statistics_group.add_argument(
+        '--chart',
+        type=str,
+        metavar='PATH',
+        help='Create a chart comparing COUNT words of wiki and wiki language frequency.'
     )
 
     args = parser.parse_args()

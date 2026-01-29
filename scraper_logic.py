@@ -15,6 +15,9 @@ class WikiScraper:
         self.use_local_file = use_local_html_file_instead
         self.history = {}
 
+    def get_language(self):
+        return self.language
+
     def _handle_local_file(self, phrase):
         pass  # TODO
 
