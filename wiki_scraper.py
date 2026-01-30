@@ -2,19 +2,21 @@ import argparse
 from wiki_manager import WikiManager
 
 
+def _check_mutually_dependent(*args) -> bool:
+    """
+    Returns True when either all or none arguments are provided, False otherwise.
+    """
+    count_present = sum(
+        1 for arg in args if arg is not None and arg is not False)
+    return count_present == 0 or count_present == len(args)
+
+
 def validate_arguments(parser: argparse.ArgumentParser, args):
     """
     Validates the correctness of the given arguments, sets error in the parser
     in case of incorrect arguments. 
     """
 
-    def _check_mutually_dependent(*args) -> bool:
-        """
-        Returns True when either all or none arguments are provided, False otherwise.
-        """
-        count_present = sum(1 for arg in args if arg is not None and arg is not False)
-        return count_present == 0 or count_present == len(args)
-    
     # Check whether any of the main modes arguments were given.
     modes = [
         args.summary,
@@ -24,8 +26,12 @@ def validate_arguments(parser: argparse.ArgumentParser, args):
         args.auto_count_words
     ]
 
-    if not any(modes):
-        parser.error("None of the main modes selected.")
+    # Check if only on of main modes has been selected.
+    selected_modes = sum(
+        1 for mode in modes if mode is not None and mode is not False)
+    if selected_modes != 1:
+        parser.error("Exactly one main mode must be selected. Main modes are " +
+                     "summary, table, count-words, analyze-relative-word-frequency, auto-count-words.)")
 
     if not _check_mutually_dependent(args.table, args.number):
         parser.error(
@@ -35,31 +41,33 @@ def validate_arguments(parser: argparse.ArgumentParser, args):
         parser.error(
             "Arguments '--table' and '--number' are required for '--first-row-is-header'.")
 
-    if args.number and args.number <= 0:
+    if args.number is not None and args.number <= 0:
         parser.error("Argument '--number' needs to be greater or equal to 1")
 
     if not _check_mutually_dependent(args.analyze_relative_word_frequency, args.mode, args.count):
         parser.error(
             "Arguments '--analyze-relative-word-frequency', '--count' and '--mode' must be used together.")
-        
+
     if args.mode and args.mode != 'article' and args.mode != 'language':
         parser.error("The only valid modes are 'article' and 'language'.")
 
     if args.analyze_relative_word_frequency == None and args.chart:
         parser.error(
-            "Arguments '--analyze-relative-word-frequency', '--count' and '--mode' must be used " + 
+            "Arguments '--analyze-relative-word-frequency', '--count' and '--mode' must be used " +
             "in order to use '--chart'."
         )
-    
+
     if not _check_mutually_dependent(args.auto_count_words, args.depth, args.wait):
-        parser.error("Arguents '--auto-count-words', '--depth' and '--wait' must be used together.")
-    
-    if args.depth and args.depth < 0:
+        parser.error(
+            "Arguents '--auto-count-words', '--depth' and '--wait' must be used together.")
+
+    if args.depth is not None and args.depth < 0:
         parser.error("Depth for crawling must be greater or equal to 0.")
-        
-    if args.wait and args.wait < 0:
-        parser.error("Waiting time for crawling msut be greater or equal to 0.")
-    
+
+    if args.wait is not None and args.wait < 0:
+        parser.error(
+            "Waiting time for crawling msut be greater or equal to 0.")
+
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
@@ -138,19 +146,19 @@ def parse_arguments():
         '--auto-count-words',
         type=str,
         metavar='PHRASE',
-        help='Start automatic word counting beginning at PHRASE and following internal links.'
+        help='Count words on different sites recursively till the DEPTH is reached, starting frmo PHRASE.'
     )
     statistics_group.add_argument(
         '--depth',
         type=int,
         metavar='DEPTH',
-        help='Maximum link distance from the start phrase to traverse (0 = only start phrase).'
+        help='Set the depth limit for auto crawling. Required if --auto-count-words is used.'
     )
     statistics_group.add_argument(
         '--wait',
         type=float,
         metavar='TIME',
-        help='Interval in seconds between processing articles.'
+        help='Wait TIME seconds before visiting next site when auto crawling.'
     )
 
     args = parser.parse_args()

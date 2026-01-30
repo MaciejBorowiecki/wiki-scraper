@@ -24,7 +24,7 @@ class WikiArticle:
             '/wiki/Category:',
             '/wiki/Help:',
             '/wiki/Browse:',
-            '/wiki/Special'
+            '/wiki/Special:'
         )
 
         self.content_div = self.soup.find(
@@ -130,14 +130,14 @@ class WikiArticle:
 
     def _process_link(self, href: str) -> str:
         """
-        Eliminate repetitions caused by '#'
+        Eliminate repetitions caused by '#'.
         """
         if '#' in href:
             href = href.split('#')[0]
-        
+
         href_phrase = href.replace('/wiki/', '')
         return href_phrase
-        
+
     def get_linked_phrases(self) -> list[str]:
         """
         Returns a list of unique phrases (article titles) found in links in this article.
@@ -153,8 +153,9 @@ class WikiArticle:
         link_candidates = self.content_div.find_all('a', href=True)
         for a_tag in link_candidates:
             href = str(a_tag['href'])
-
-            href_phrase = self._process_link(href)
-            unique_links.add(href_phrase)
+            
+            if self._is_valid_link(href):
+                href_phrase = self._process_link(href)
+                unique_links.add(href_phrase)
 
         return list(unique_links)
