@@ -15,6 +15,17 @@ class WikiArticle:
         self.content = content
         self.language = language
         self.soup = BeautifulSoup(content, 'html.parser')
+        self._BANNED_PREFIXES = (
+            '/wiki/File:',
+            '/wiki/Template:',
+            '/wiki/Bulbapedia:',
+            '/wiki/MediaWiki:',
+            '/wiki/User:',
+            '/wiki/Category:',
+            '/wiki/Help:',
+            '/wiki/Browse:',
+            '/wiki/Special'
+        )
 
         self.content_div = self.soup.find(
             'div', class_='mw-content-ltr mw-parser-output')
@@ -105,40 +116,45 @@ class WikiArticle:
 
         return word_dict
 
-    def get_articles_links(self) -> list[str]:
+    def _is_valid_link(self, href: str) -> bool:
         """
-        Returns list of unique links inside an article. Filters technical and external links.
+        Check whether link is valid (it is content link and not technical or maintanence link).
         """
- 
+        if not href.startswith('/wiki/'):
+            return False
+
+        if href.startswith(self._BANNED_PREFIXES):
+            return False
+
+        return True
+
+    def _process_link(self, href: str) -> str:
+        """
+        Eliminate repetitions caused by '#'
+        """
+        if '#' in href:
+            href = href.split('#')[0]
+        
+        href_phrase = href.replace('/wiki/', '')
+        return href_phrase
+        
+    def get_linked_phrases(self) -> list[str]:
+        """
+        Returns a list of unique phrases (article titles) found in links in this article.
+        """
+
         if not self.content_div:
             print(
                 f"Warning: Main content container was not found for '{self.title}'.")
             return []
-        
+
         unique_links = set()
-        
-        # Link with these prefixes are technical sites and not articles
-        BANNED_PREFIXES = (
-            '/wiki/File:',      # files / images
-            '/wiki/Template:',  # templates
-            '/wiki/Bulbapedia:',# technical Bulbapedia sites
-            '/wiki/MediaWiki:', # MediaWiki sites
-            '/wiki/User:',      # user accounts sites
-            '/wiki/Category:',  # category sites
-            '/wiki/Help:',      # user help sites
-            '/wiki/Browse:',    # browse menu sitesa
-            '/wiki/Special',    # special Bulbapedia sites
-        )
-        
+
         link_candidates = self.content_div.find_all('a', href=True)
-        for a_tag in  link_candidates:
+        for a_tag in link_candidates:
             href = str(a_tag['href'])
-            
-            if href.startswith('/wiki/') and not href.startswith(BANNED_PREFIXES):
-                if '#' in href:
-                    href = href.split('#')[0]
-                clean_phrase = href.replace('/wiki/','')
-                unique_links.add(clean_phrase)
-                
+
+            href_phrase = self._process_link(href)
+            unique_links.add(href_phrase)
+
         return list(unique_links)
-                

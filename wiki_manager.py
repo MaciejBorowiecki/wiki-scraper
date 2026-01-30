@@ -201,6 +201,7 @@ class WikiManager:
         if self.args.chart:
             self._handle_chart(data_pd_sorted[['wiki_norm', 'lang_norm']], self.args.chart, language)
         
+        
     def handle_auto_count_words(self) -> None:
         start_phrase = self.args.auto_count_words
         max_depth = self.args.depth
@@ -231,7 +232,7 @@ class WikiManager:
                 self._update_json_stats(word_dict)
             
             if current_depth < max_depth:
-                links = current_article.get_articles_links()
+                links = current_article.get_linked_phrases()
                 for link in links:
                     if link not in visited:
                         visited.add(link)
