@@ -12,7 +12,7 @@ def validate_arguments(parser: argparse.ArgumentParser, args):
         """
         Returns True when either all or none arguments are provided, False otherwise.
         """
-        count_present = sum(1 for arg in args if arg is not None)
+        count_present = sum(1 for arg in args if arg is not None and arg is not False)
         return count_present == 0 or count_present == len(args)
     
     # Check whether any of the main modes arguments were given.
@@ -20,7 +20,8 @@ def validate_arguments(parser: argparse.ArgumentParser, args):
         args.summary,
         args.table,
         args.count_words,
-        args.analyze_relative_word_frequency
+        args.analyze_relative_word_frequency,
+        args.auto_count_words
     ]
 
     if not any(modes):
@@ -49,6 +50,15 @@ def validate_arguments(parser: argparse.ArgumentParser, args):
             "Arguments '--analyze-relative-word-frequency', '--count' and '--mode' must be used " + 
             "in order to use '--chart'."
         )
+    
+    if not _check_mutually_dependent(args.auto_count_words, args.depth, args.wait):
+        parser.error("Arguents '--auto-count-words', '--depth' and '--wait' must be used together.")
+    
+    if args.depth and args.depth < 0:
+        parser.error("Depth for crawling must be greater or equal to 0.")
+        
+    if args.wait and args.wait < 0:
+        parser.error("Waiting time for crawling msut be greater or equal to 0.")
     
 
 def parse_arguments():
@@ -123,6 +133,24 @@ def parse_arguments():
         type=str,
         metavar='PATH',
         help='Create a chart comparing COUNT words of wiki and wiki language frequency.'
+    )
+    statistics_group.add_argument(
+        '--auto-count-words',
+        type=str,
+        metavar='PHRASE',
+        help='Start automatic word counting beginning at PHRASE and following internal links.'
+    )
+    statistics_group.add_argument(
+        '--depth',
+        type=int,
+        metavar='DEPTH',
+        help='Maximum link distance from the start phrase to traverse (0 = only start phrase).'
+    )
+    statistics_group.add_argument(
+        '--wait',
+        type=float,
+        metavar='TIME',
+        help='Interval in seconds between processing articles.'
     )
 
     args = parser.parse_args()

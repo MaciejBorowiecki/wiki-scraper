@@ -1,9 +1,11 @@
 from scraper_logic import WikiScraper
+import time
 import pandas as pd
 import json
 import os
 import wordfreq
 import matplotlib.pyplot as plt
+from collections import deque
 
 
 class WikiManager:
@@ -29,6 +31,8 @@ class WikiManager:
             self.handle_count_words()
         if self.args.analyze_relative_word_frequency:
             self.handle_relative_word_frequency_analysis()
+        if self.args.auto_count_words:
+            self.handle_auto_count_words()
 
     def handle_summary(self) -> None:
         phrase = self.args.summary
@@ -156,7 +160,6 @@ class WikiManager:
             plt.close()
         
     def handle_relative_word_frequency_analysis(self) -> None:
-        phrase = self.args.count_words
         mode = self.args.mode
         n_rows = self.args.count
         
@@ -197,3 +200,46 @@ class WikiManager:
         
         if self.args.chart:
             self._handle_chart(data_pd_sorted[['wiki_norm', 'lang_norm']], self.args.chart, language)
+        
+    def handle_auto_count_words(self) -> None:
+        start_phrase = self.args.auto_count_words
+        max_depth = self.args.depth
+        wait_time = self.args.wait
+        
+        article = self.scraper.scrape(start_phrase)
+
+        if not article:
+            print(f"Error scraping starting article: '{start_phrase}'.")
+            return None
+
+        queue = deque([(start_phrase, 0)])
+        visited = {start_phrase}
+        
+        # visiting next links untill max_depth is reached or there are no more links to visit
+        while queue:
+            current_phrase, current_depth = queue.popleft()
+            
+            print(f"\n-----Counting Words on '{current_phrase}' (Depth: {current_depth})-----")
+            
+            current_article = self.scraper.scrape(current_phrase)
+            if not current_article:
+                print(f"Skipping '{current_phrase}' (Article not found or error occurred).")
+                continue
+                
+            word_dict = article.get_word_count()
+            if word_dict:
+                self._update_json_stats(word_dict)
+            
+            if current_depth < max_depth:
+                links = current_article.get_articles_links()
+                for link in links:
+                    if link not in visited:
+                        visited.add(link)
+                        queue.append((link,current_depth+1))
+            
+            # Wait only if there are more links waiting for processing.
+            if queue:
+                print(f"Waiting {wait_time}s")
+                time.sleep(wait_time)
+                
+        
