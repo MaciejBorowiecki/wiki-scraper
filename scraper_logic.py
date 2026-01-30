@@ -1,4 +1,5 @@
 import requests
+import os
 from wiki_article import WikiArticle
 
 
@@ -9,19 +10,40 @@ class WikiScraper:
     """
 
     def __init__(self, base_url: str = "https://bulbapedia.bulbagarden.net/wiki",
-                 language: str = "en", use_local_html_file_instead: bool = False):
+                 language: str = "en", use_local_html_file_instead: bool = False,
+                 base_path: str = ""):
         self.base_url = base_url.rstrip('/')
         self.language = language
         self.use_local_file = use_local_html_file_instead
-        self.history = {}
+        self.base_path = base_path
 
     def get_language(self):
         return self.language
 
-    def _handle_local_file(self, phrase):
-        pass  # TODO
+    def _extract_text_from_file(self, filename: str):
+        try:
+            with open(filename, 'r') as f:
+                content = f.read()
+                return content
+        except IOError as e:
+            print(f"Error reading file: {e}")
+            return None       
 
-    def _handle_online_request(self, phrase):
+    def _handle_local_file(self, phrase: str):
+        # Handle files with ' ' or '_' the same.
+        file = self.base_path + phrase + ".html"
+        file_ = self.base_path + file.replace(' ', '_')
+
+        if not os.path.exists(file) and not os.path.exists(file_):
+            print("Error, there is no file '{file}' in current directory.")
+            return None
+
+        if os.path.exists(file):
+            return self._extract_text_from_file(file)
+        else:
+            return self._extract_text_from_file(file_)
+            
+    def _handle_online_request(self, phrase: str):
         url = f"{self.base_url}/{phrase.replace(' ', '_')}"
 
         try:
@@ -38,8 +60,6 @@ class WikiScraper:
         """
         Handles fetching raw html content and returns WikiArticle object or None in case of error.
         """
-        if phrase in self.history:
-            return self.history[phrase]
 
         if self.use_local_file:
             content = self._handle_local_file(phrase)
@@ -47,8 +67,7 @@ class WikiScraper:
             content = self._handle_online_request(phrase)
 
         if content:
-            self.history[phrase] = WikiArticle(phrase, content, self.language)
-            return self.history[phrase]
+            return WikiArticle(phrase, content, self.language)
 
         print("There was no content after fetching webpage.")
         return None
