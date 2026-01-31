@@ -4,3 +4,4 @@ pandas
 matplotlib
 wordfreq
 pytest
+lxml
