@@ -83,11 +83,11 @@ failure_scenarios = [
     ({"summary": "Wykład z Analizy", "chart": True}, "Chart without analyze"),
 
     # Relative Word Frequency Analysis failures
-    ({"analyze_relative_word_frequency": "A",
+    ({"analyze_relative_word_frequency": True,
      "count": 10, "mode": None}, "Analyze missing mode"),
-    ({"analyze_relative_word_frequency": "A",
+    ({"analyze_relative_word_frequency": True,
      "count": None, "mode": "Language"}, "Analyze missing count"),
-    ({"analyze_relative_word_frequency": "A",
+    ({"analyze_relative_word_frequency": True,
      "count": 10, "mode": "bad"}, "Analyze invalid mode"),
 
     # Auto Count Words failures

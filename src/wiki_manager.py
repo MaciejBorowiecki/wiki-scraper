@@ -5,6 +5,7 @@ import json
 import os
 import wordfreq
 import matplotlib.pyplot as plt
+import numpy as np
 from collections import deque
 from .exceptions import ArticleFetchError, ContentExtractionError
 
@@ -54,10 +55,10 @@ class WikiManager:
         try:
             article = self.scraper.scrape(phrase)
             summary_text = article.get_summary()
-            
+
             print("\n-----Summary-----")
             print(summary_text, "\n")
-            
+
         except ArticleFetchError as e:
             print(f"Error scraping article {phrase} : {e}.")
         except ContentExtractionError as e:
@@ -67,7 +68,6 @@ class WikiManager:
         phrase = self.args.table
         try:
             article = self.scraper.scrape(phrase)
-
 
             df_table = article.get_table(
                 self.args.number,
@@ -94,7 +94,7 @@ class WikiManager:
             stats_df = pd.DataFrame(counts.items(), columns=["Value", "Count"])
             stats_df = stats_df.sort_values(by="Count", ascending=False)
             print(stats_df.to_string(index=False), "\n")
-            
+
         except (ArticleFetchError, ContentExtractionError) as e:
             print(f"Error. Table operation failed: {e}")
         except Exception as e:
@@ -136,11 +136,11 @@ class WikiManager:
     def handle_count_words(self) -> None:
         phrase = self.args.count_words
 
-        try: 
+        try:
             article = self.scraper.scrape(phrase)
             word_dict = article.get_word_count()
             self._update_json_stats(word_dict)
-        
+
         except ArticleFetchError as e:
             print(f"Error scraping article {phrase} : {e}.")
         except ContentExtractionError as e:
@@ -218,23 +218,25 @@ class WikiManager:
 
         data_pd = pd.DataFrame(data).set_index("word")
 
-        wiki_count_max = data_pd["wiki"].max(
-        ) if data_pd["wiki"].max() > 0 else 1
-        lang_freq_max = data_pd["lang"].max(
-        ) if data_pd["lang"].max() > 0 else 1
+        wiki_count_max = data_pd["wiki"].max() if data_pd["wiki"].max() > 0 else 1
+        lang_freq_max = data_pd["lang"].max() if data_pd["lang"].max() > 0 else 1
         data_pd["wiki_norm"] = data_pd["wiki"] / wiki_count_max
         data_pd["lang_norm"] = data_pd["lang"] / lang_freq_max
 
         sort_norm = "wiki_norm" if mode == "article" else "lang_norm"
         data_pd_sorted = data_pd.sort_values(by=sort_norm, ascending=True)
+        data_pd_sorted = data_pd_sorted.replace(0, np.nan)
 
         print("\n-----Relative Word Frequency Analysis-----")
-        print(data_pd_sorted[["wiki_norm", "lang_norm"]])
+        print(data_pd_sorted[["wiki_norm", "lang_norm"]].to_string(
+            na_rep=" ",
+            float_format="%.6f"
+        ))
 
         if self.args.chart:
             self._handle_chart(
-                data_pd_sorted[["wiki_norm", "lang_norm"]
-                               ], self.args.chart, language
+                data_pd_sorted[["wiki_norm", "lang_norm"]],
+                self.args.chart, language
             )
 
     def handle_auto_count_words(self) -> None:
