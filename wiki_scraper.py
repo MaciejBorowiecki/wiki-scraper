@@ -31,35 +31,50 @@ def validate_arguments(parser: argparse.ArgumentParser, args):
         1 for mode in modes if mode is not None and mode is not False)
     if selected_modes != 1:
         parser.error("Exactly one main mode must be selected. Main modes are " +
-                     "summary, table, count-words, analyze-relative-word-frequency, auto-count-words.)")
+                     "summary, table, count-words," +
+                     " analyze-relative-word-frequency, auto-count-words.)"
+                     )
 
     if not _check_mutually_dependent(args.table, args.number):
         parser.error(
-            "Arguments '--table' and '--number' must be used together.")
+            "Arguments '--table' and '--number' must be used together."
+        )
 
-    if args.first_row_is_header and (args.table == None or args.number == None):
+    if args.first_row_is_header and (args.table is None or args.number is None):
         parser.error(
-            "Arguments '--table' and '--number' are required for '--first-row-is-header'.")
+            "Arguments '--table' and '--number' are required" +
+            " for '--first-row-is-header'."
+        )
 
     if args.number is not None and args.number <= 0:
         parser.error("Argument '--number' needs to be greater or equal to 1")
 
-    if not _check_mutually_dependent(args.analyze_relative_word_frequency, args.mode, args.count):
+    if not _check_mutually_dependent(
+            args.analyze_relative_word_frequency,
+            args.mode,
+            args.count):
         parser.error(
-            "Arguments '--analyze-relative-word-frequency', '--count' and '--mode' must be used together.")
-
-    if args.mode and args.mode != 'article' and args.mode != 'language':
-        parser.error("The only valid modes are 'article' and 'language'.")
-
-    if args.analyze_relative_word_frequency == None and args.chart:
-        parser.error(
-            "Arguments '--analyze-relative-word-frequency', '--count' and '--mode' must be used " +
-            "in order to use '--chart'."
+            "Arguments '--analyze-relative-word-frequency', '--count' and" +
+            " '--mode' must be used together."
         )
 
-    if not _check_mutually_dependent(args.auto_count_words, args.depth, args.wait):
+    if args.mode and args.mode not in ('article', 'language'):
+        parser.error("The only valid modes are 'article' and 'language'.")
+
+    if args.analyze_relative_word_frequency is None and args.chart:
         parser.error(
-            "Arguents '--auto-count-words', '--depth' and '--wait' must be used together.")
+            "Arguments '--analyze-relative-word-frequency', '--count' and " +
+            "'--mode' must be used in order to use '--chart'."
+        )
+
+    if not _check_mutually_dependent(
+            args.auto_count_words,
+            args.depth,
+            args.wait):
+        parser.error(
+            "Arguents '--auto-count-words', '--depth' and '--wait' " +
+            " must be used together."
+        )
 
     if args.depth is not None and args.depth < 0:
         parser.error("Depth for crawling must be greater or equal to 0.")
@@ -78,7 +93,10 @@ def parse_arguments():
         '--summary',
         type=str,
         metavar='PHRASE',
-        help='Fetch and print the first paragraph of the wiki article for the given PHRASE.'
+        help=(
+            'Fetch and print the first paragraph of the wiki article for ' +
+            ' the given PHRASE.'
+        )
 
     )
 
@@ -88,7 +106,10 @@ def parse_arguments():
         '--table',
         type=str,
         metavar='PHRASE',
-        help='Fetch and display a specific table from the article found for PHRASE.'
+        help=(
+            'Fetch and display a specific table from the article found for ' +
+            'PHRASE.'
+        )
     )
     table_group.add_argument(
         '--number',
@@ -108,7 +129,10 @@ def parse_arguments():
         '--count-words',
         type=str,
         metavar='PHRASE',
-        help='Count the occurrences of words from the article found for PHRASE. Save results to JSON.'
+        help=(
+            'Count the occurrences of words from the article found ' +
+            'for PHRASE. Save results to JSON.'
+        )
     )
     statistics_group.add_argument(
         '--analyze-relative-word-frequency',
@@ -123,8 +147,8 @@ def parse_arguments():
         type=str,
         metavar='MODE',
         help=(
-            'Sort by frequency of words in ARTICLE or sort by LANGUAGE of the wiki. ' +
-            'Required if --analyze-relative-word-frequency is used.'
+            'Sort by frequency of words in ARTICLE or sort by LANGUAGE of the' +
+            ' wiki. Required if --analyze-relative-word-frequency is used.'
         )
     )
     statistics_group.add_argument(
@@ -132,27 +156,34 @@ def parse_arguments():
         type=int,
         metavar='ROWS',
         help=(
-            'Number of words to compare their frequency between the wiki articles and the wiki language ' +
-            'Required if --analyze-relative-word-frequency is used.'
+            'Number of words to compare their frequency between the wiki ' +
+            'articles and the wiki language. Required if ' +
+            '--analyze-relative-word-frequency is used.'
         )
     )
     statistics_group.add_argument(
         '--chart',
         type=str,
         metavar='PATH',
-        help='Create a chart comparing COUNT words of wiki and wiki language frequency.'
+        help=('Create a chart comparing COUNT words of wiki and wiki ' +
+              'language frequency.'
+              )
     )
     statistics_group.add_argument(
         '--auto-count-words',
         type=str,
         metavar='PHRASE',
-        help='Count words on different sites recursively till the DEPTH is reached, starting frmo PHRASE.'
+        help=('Count words on different sites recursively till the DEPTH is ' +
+              'reached, starting frmo PHRASE.'
+              )
     )
     statistics_group.add_argument(
         '--depth',
         type=int,
         metavar='DEPTH',
-        help='Set the depth limit for auto crawling. Required if --auto-count-words is used.'
+        help=('Set the depth limit for auto crawling. ' +
+              'Required if --auto-count-words is used.'
+              )
     )
     statistics_group.add_argument(
         '--wait',

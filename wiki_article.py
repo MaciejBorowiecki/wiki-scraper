@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 from io import StringIO
 import pandas as pd
 import re
+from exceptions import ContentExtractionError
 
 
 class WikiArticle:
@@ -30,47 +31,52 @@ class WikiArticle:
         self.content_div = self.soup.find(
             'div', class_='mw-content-ltr mw-parser-output')
 
-        if not self.content_div:
-            print(
-                f"Warning: Main content container was not found for '{title}'.")
 
-    def get_summary(self):
+    def _get_content_div(self):
+        """
+        Helper that ensures content div exists and returns it.
+        Raises ContentExtractionError if main contetn div is missing.
+        """
+        if self.content_div is None:
+            raise ContentExtractionError(
+                f"Main content div not found for article: '{self.title}'"
+            )
+        return self.content_div
+            
+    def get_summary(self) -> str:
         """
         Extracts summary (the first paragraph) of the article.
         """
 
-        if not self.content_div:
-            print(
-                f"Warning: Main content container was not found for '{self.title}'.")
-            return None
+        content = self._get_content_div()
 
-        first_paragraph = self.content_div.find('p')
+        first_paragraph = content.find('p')
 
         if not first_paragraph:
-            print(f"First paragraph was not found for '{self.title}'.")
-            return None
+            raise ContentExtractionError(f"No paragraph found in '{self.title}'")
+        
         return first_paragraph.get_text().strip()
 
-    def get_table(self, index: int, use_first_row_as_header: bool = False):
+    def get_table(self,
+                  index: int,
+                  use_first_row_as_header: bool = False
+                  ) -> pd.DataFrame:
         """
         Extracts the nth table (index is 1-based) from the article content.
         """
 
-        if not self.content_div:
-            print(
-                f"Warning: Main content container was not found for '{self.title}'.")
-            return None
+        content = self._get_content_div()
 
-        tables = self.content_div.find_all('table', limit=index)
+        tables = content.find_all('table', limit=index)
 
         if not tables:
-            print(f"Error: There are no tables on the '{self.title}' page.")
-            return None
+            raise ContentExtractionError(f"No tables found on page '{self.title}'")
 
         if index < 1 or index > len(tables):
-            print(f"Error: Table index out of bounds. For '{self.title}' ",
-                  f"page index should be between 1 and {len(tables)}.")
-            return None
+            raise ContentExtractionError(
+                f"Table index out of bounds. For '{self.title}' ",
+                  f"page index should be between 1 and {len(tables)}."
+            )
 
         selected_table = tables[-1]
         selected_table_pd = StringIO(str(selected_table))
@@ -84,12 +90,15 @@ class WikiArticle:
             )
 
             if df_selected_table[0].empty:
-                print("Error: there is no data in selected table.")
-                return None
+                raise ContentExtractionError(
+                    "there is no data in selected table."
+                    )
+                
             return df_selected_table[0]
         except ValueError:
-            print("Error: {e}.")
-            return None
+            raise ContentExtractionError(
+                "Pandas dataframe ValueError: {e}"
+            )
 
     def _count_words(self, words: list[str]) -> dict[str, int]:
         word_count = {}
@@ -98,18 +107,15 @@ class WikiArticle:
                 word_count[word] = word_count.get(word, 0) + 1
         return word_count
 
-    def get_word_count(self):
+    def get_word_count(self) -> dict[str,int]:
         """
-        Counts number of occurrences of any word from a given article except from 
-        constant elements of the page (e.g. menu).
+        Counts number of occurrences of any word from a given article except
+        from constant elements of the page (e.g. menu).
         """
 
-        if not self.content_div:
-            print(
-                f"Warning: Main content container was not found for '{self.title}'.")
-            return {}
+        content = self._get_content_div()
 
-        text = self.content_div.get_text(separator=' ')
+        text = content.get_text(separator=' ')
         words = re.findall(r'\w+', text.lower())
 
         word_dict = self._count_words(words)
@@ -118,8 +124,10 @@ class WikiArticle:
 
     def _is_valid_link(self, href: str) -> bool:
         """
-        Check whether link is valid (it is content link and not technical or maintanence link).
+        Check whether link is valid (it is content link and not technical
+        or maintanence link).
         """
+
         if not href.startswith('/wiki/'):
             return False
 
@@ -132,6 +140,7 @@ class WikiArticle:
         """
         Eliminate repetitions caused by '#'.
         """
+
         if '#' in href:
             href = href.split('#')[0]
 
@@ -140,20 +149,18 @@ class WikiArticle:
 
     def get_linked_phrases(self) -> list[str]:
         """
-        Returns a list of unique phrases (article titles) found in links in this article.
+        Returns a list of unique phrases (article titles) 
+        found in links in this article.
         """
 
-        if not self.content_div:
-            print(
-                f"Warning: Main content container was not found for '{self.title}'.")
-            return []
+        content = self._get_content_div()
 
         unique_links = set()
 
-        link_candidates = self.content_div.find_all('a', href=True)
+        link_candidates = content.find_all('a', href=True)
         for a_tag in link_candidates:
             href = str(a_tag['href'])
-            
+
             if self._is_valid_link(href):
                 href_phrase = self._process_link(href)
                 unique_links.add(href_phrase)
