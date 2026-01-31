@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 from io import StringIO
 import pandas as pd
+import numpy as np
 import re
 from .exceptions import ContentExtractionError
 
@@ -95,7 +96,7 @@ class WikiArticle:
                     "there is no data in selected table."
                 )
 
-            return df_selected_table[0]
+            return df_selected_table[0].replace(np.nan, "")
         except ValueError as e:
             raise ContentExtractionError(
                 "Pandas dataframe ValueError: {e}"
