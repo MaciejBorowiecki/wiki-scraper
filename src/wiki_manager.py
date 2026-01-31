@@ -16,9 +16,11 @@ class WikiManager:
     and executing appropriate methods.
     """
 
-    def __init__(self, args):
+    def __init__(self, args, use_local_html_files_instead: bool = False):
         self.args = args
-        self.scraper = WikiScraper()
+        self.scraper = WikiScraper(
+            use_local_html_file_instead=use_local_html_files_instead
+            )
 
     def _print_license_info(self, url: str):
         print(f"\nWyjście programu na licencji zgodnej z źródłem "
