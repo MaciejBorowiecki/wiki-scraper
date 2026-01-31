@@ -24,7 +24,6 @@ def test_kanto_summary():
         "together form a joint landmass that is south of Sinnoh."
     )
     expected_normalized = normalize_text(expected_text)
-    
     expected_start = expected_normalized[:50]
     expected_end = expected_normalized[-50:]
     base_dir = 'data/'
@@ -48,17 +47,16 @@ def test_kanto_summary():
 
         # normalize result text for comparison
         summary_normalized = ' '.join(summary.split())
-        
         assert summary_normalized.startswith(expected_start), (
             f"Begginning error:\n"
-            "Expected: {expected_start}...\n"
-            "Got: {summary_normalized[:30]}"
+            f"Expected: {expected_start}...\n"
+            f"Got: {summary_normalized[:30]}"
         )
         
         assert summary_normalized.endswith(expected_end),(
             f"Ending error:\n" 
-            "Expected: {expected_end}...\n" 
-            "Got: {summary_normalized[-30:]}"
+            f"Expected: {expected_end}...\n" 
+            f"Got: {summary_normalized[-30:]}"
         )
         
         print("Integration test finished successfully.")
