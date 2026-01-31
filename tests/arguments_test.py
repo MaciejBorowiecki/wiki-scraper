@@ -37,7 +37,8 @@ dependency_success_scenarios = [
 @pytest.mark.parametrize("args_tuple, description", dependency_success_scenarios)
 def test_check_mutually_dependent_success(args_tuple, description):
     """
-    Tests that the function returns True when either all or none arguments are provided.
+    Tests that the function returns True when either all or none arguments
+    are provided.
     """
 
     result = _check_mutually_dependent(*args_tuple)
@@ -90,10 +91,25 @@ failure_scenarios = [
      "count": 10, "mode": "bad"}, "Analyze invalid mode"),
 
     # Auto Count Words failures
-    ({"auto_count_words": "Mew", "wait": 1.0, "depth": None}, "Crawler missing depth"),
-    ({"auto_count_words": "Mew", "wait": None, "depth": 2}, "Crawler missing wait"),
-    ({"auto_count_words": "Mew", "wait": 1.0, "depth": -1}, "Crawler negative depth"),
-    ({"auto_count_words": "Mew", "wait": -1.0, "depth": 1}, "Crawler negative wait"),
+    ({"auto_count_words": "Mew",
+    "wait": 1.0,
+      "depth": None},
+     "Crawler missing depth"),
+    
+    ({"auto_count_words": "Mew",
+      "wait": None,
+      "depth": 2},
+     "Crawler missing wait"),
+    
+    ({"auto_count_words": "Mew",
+      "wait": 1.0,
+      "depth": -1},
+     "Crawler negative depth"),
+    
+    ({"auto_count_words": "Mew",
+      "wait": -1.0,
+      "depth": 1},
+     "Crawler negative wait"),
 ]
 
 

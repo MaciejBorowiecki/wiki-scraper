@@ -1,6 +1,6 @@
 import sys
 import os
-from scraper_logic import WikiScraper
+from src.scraper_logic import WikiScraper
 
 def normalize_text(text: str) -> str:
     """

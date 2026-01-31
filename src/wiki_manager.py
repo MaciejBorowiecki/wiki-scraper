@@ -1,4 +1,4 @@
-from scraper_logic import WikiScraper
+from .scraper_logic import WikiScraper
 import time
 import pandas as pd
 import json
@@ -6,7 +6,7 @@ import os
 import wordfreq
 import matplotlib.pyplot as plt
 from collections import deque
-from exceptions import ArticleFetchError, ContentExtractionError
+from .exceptions import ArticleFetchError, ContentExtractionError
 
 
 class WikiManager:

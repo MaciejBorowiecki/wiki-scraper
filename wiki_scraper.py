@@ -1,5 +1,5 @@
 import argparse
-from wiki_manager import WikiManager
+from src.wiki_manager import WikiManager
 
 
 def _check_mutually_dependent(*args) -> bool:

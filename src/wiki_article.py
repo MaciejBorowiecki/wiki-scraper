@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 from io import StringIO
 import pandas as pd
 import re
-from exceptions import ContentExtractionError
+from .exceptions import ContentExtractionError
 
 
 class WikiArticle:
@@ -31,7 +31,6 @@ class WikiArticle:
         self.content_div = self.soup.find(
             'div', class_='mw-content-ltr mw-parser-output')
 
-
     def _get_content_div(self):
         """
         Helper that ensures content div exists and returns it.
@@ -42,7 +41,7 @@ class WikiArticle:
                 f"Main content div not found for article: '{self.title}'"
             )
         return self.content_div
-            
+
     def get_summary(self) -> str:
         """
         Extracts summary (the first paragraph) of the article.
@@ -53,8 +52,9 @@ class WikiArticle:
         first_paragraph = content.find('p')
 
         if not first_paragraph:
-            raise ContentExtractionError(f"No paragraph found in '{self.title}'")
-        
+            raise ContentExtractionError(
+                f"No paragraph found in '{self.title}'")
+
         return first_paragraph.get_text().strip()
 
     def get_table(self,
@@ -70,12 +70,13 @@ class WikiArticle:
         tables = content.find_all('table', limit=index)
 
         if not tables:
-            raise ContentExtractionError(f"No tables found on page '{self.title}'")
+            raise ContentExtractionError(
+                f"No tables found on page '{self.title}'")
 
         if index < 1 or index > len(tables):
             raise ContentExtractionError(
-                f"Table index out of bounds. For '{self.title}' ",
-                  f"page index should be between 1 and {len(tables)}."
+                f"Table index out of bounds. For '{self.title}' "
+                f"page index should be between 1 and {len(tables)}."
             )
 
         selected_table = tables[-1]
@@ -92,10 +93,10 @@ class WikiArticle:
             if df_selected_table[0].empty:
                 raise ContentExtractionError(
                     "there is no data in selected table."
-                    )
-                
+                )
+
             return df_selected_table[0]
-        except ValueError:
+        except ValueError as e:
             raise ContentExtractionError(
                 "Pandas dataframe ValueError: {e}"
             )
@@ -107,7 +108,7 @@ class WikiArticle:
                 word_count[word] = word_count.get(word, 0) + 1
         return word_count
 
-    def get_word_count(self) -> dict[str,int]:
+    def get_word_count(self) -> dict[str, int]:
         """
         Counts number of occurrences of any word from a given article except
         from constant elements of the page (e.g. menu).

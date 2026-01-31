@@ -1,7 +1,7 @@
 import requests
 import os
-from wiki_article import WikiArticle
-from exceptions import ArticleFetchError
+from .wiki_article import WikiArticle
+from .exceptions import ArticleFetchError
 
 
 class WikiScraper:

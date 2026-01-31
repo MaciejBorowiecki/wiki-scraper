@@ -1,5 +1,5 @@
 import pytest
-from wiki_article import WikiArticle
+from src.wiki_article import WikiArticle
 
 
 def create_dummy_article(html_content: str = "") -> WikiArticle:
@@ -7,8 +7,7 @@ def create_dummy_article(html_content: str = "") -> WikiArticle:
     Helper function to create a WikiArticle object with dummy data.
     """
 
-    return WikiArticle("Test Article",html_content,"en")
-
+    return WikiArticle("Test Article", html_content, "en")
 
 
 validation_scenarios = [
@@ -29,6 +28,7 @@ validation_scenarios = [
     ("https://google.com", False, "External link"),
 ]
 
+
 @pytest.mark.parametrize("href, expected, description", validation_scenarios)
 def test_is_valid_link(href, expected, description):
     """
@@ -37,11 +37,10 @@ def test_is_valid_link(href, expected, description):
     """
 
     article = create_dummy_article()
-    
-    result = article._is_valid_link(href)
-    
-    assert result is expected, f"Failed: {description}"
 
+    result = article._is_valid_link(href)
+
+    assert result is expected, f"Failed: {description}"
 
 
 processing_scenarios = [
@@ -54,6 +53,7 @@ processing_scenarios = [
     ("/wiki/Mewtwo#Mega_Mewtwo_X", "Mewtwo", "Remove complex anchor"),
 ]
 
+
 @pytest.mark.parametrize("href, expected_phrase, description", processing_scenarios)
 def test_process_link(href, expected_phrase, description):
     """
@@ -61,11 +61,10 @@ def test_process_link(href, expected_phrase, description):
     and extracts the article phrase.
     """
     article = create_dummy_article()
-    
-    result = article._process_link(href)
-    
-    assert result == expected_phrase, f"Failed: {description}"
 
+    result = article._process_link(href)
+
+    assert result == expected_phrase, f"Failed: {description}"
 
 
 def test_get_linked_phrases():
@@ -86,18 +85,21 @@ def test_get_linked_phrases():
         Zaawansowany kurs programowania niskopoziomowego.</a> 
     </div>
     """
-    
+
     article = create_dummy_article(html_content)
-    
+
     results = article.get_linked_phrases()
-    
+
     # assert valid phrases are present
     assert "Pikachu" in results
     assert "Raichu" in results
-    
+
+    mimuw_link = ("https://informatorects.uw.edu.pl/pl/courses/" +
+                  "view?prz_kod=1000-213bPYT"
+                  )
     # assert invalid links are filtered out
     assert "File:Pika.jpg" not in results
-    assert "https://informatorects.uw.edu.pl/pl/courses/view?prz_kod=1000-213bPYT" not in results
-    
+    assert mimuw_link not in results
+
     # assert correct number of results
     assert len(results) == 2
